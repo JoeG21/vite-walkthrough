@@ -1,2 +1,1 @@
 # vite-walkthrough
-hello

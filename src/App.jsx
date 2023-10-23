@@ -1,21 +1,23 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import './style.css'
+import { NewTodoForm } from './NewTodoForm'
+import { TodoList } from './TodoList'
 
 export default function App() {
-  const [newItem, setNewItem] = useState("")
   // will re-render the component causing infinite loop 
   // NOTE: Whenever the state/prop update the component re-render!!!
   // setNewItem('dad')
-  const [todos, setTodos] = useState([])
+  const [todos, setTodos] = useState(() => {
+    const localVal = localStorage.getItem("ITEMS")
+    if (localVal == null) return []
+    return JSON.parse(localVal)
+  })
 
-  /*
-  handleSubmit is updating the the todos array
-  it's adding to it and keeping the old/current array
-  */
-  function handleSubmit(e) {
-    // so it don't refresh when the event updates
-    e.preventDefault()
+  useEffect(() => {
+    localStorage.setItem("ITEMS", JSON.stringify(todos))
+  }, [todos])
 
+  function addTodo(title) {
     /* 
     NOTE: When you have to use the current value
     you need to pass in a function and return
@@ -26,12 +28,9 @@ export default function App() {
       then we are assigning 'id', 'title', 'completed' attributes to each todo
       */
       return [
-        ...currentTodos, {id: crypto.randomUUID(), title: newItem, completed: false },
+        ...currentTodos, {id: crypto.randomUUID(), title: title, completed: false },
       ]
     })
-
-    // we are simply updating the newItem state so it get rids of the current text
-    setNewItem("")
   }
 
 
@@ -65,47 +64,9 @@ export default function App() {
 
   return (
     <>
-      <form onSubmit={handleSubmit} className='new-item-form'>
-        <div className='form-row'>
-          <label htmlFor='item'> New Item</label>
-          <input value={newItem}
-            onChange={e => setNewItem(e.target.value)}
-            type='text'
-            id='item'
-          />
-        </div>
-        <button className='btn'> Add </button>
-      </form>
-
+      <NewTodoForm addTodo={addTodo} />
       <h1 className='header'> Todo List </h1>
-      <ul className='list'>
-        {/* this is short-circuiting */}
-        {todos.length === 0 && 'No Todo'}
-        {todos.map(todo => {
-          return (
-            <li key={todo.id}>
-              <label>
-                <input type='checkbox' checked={todo.completed}
-                /* 
-                whenever we click on the checkbox the toggleTodo gets call
-                then we are passing in the todo ID and checked attribute
-                to the toggleTodo fun
-                */
-                onChange={e => toggleTodo(todo.id, e.target.checked)}
-                />
-                {todo.title}
-              </label>
-              
-              <button className='btn btn-danger'
-              // passing in function so we can call deleteTodo fun on click
-              onClick={() => deleteTodo(todo.id)}
-              > 
-                Delete 
-              </button>
-            </li>
-          )
-        })}
-      </ul>
+      <TodoList todos={todos} toggleTodo={toggleTodo} deleteTodo={deleteTodo} />
     </>
   )
 }
